@@ -1,9 +1,5 @@
-import { useState } from "react";
-import { createClient } from '@supabase/supabase-js'
-import { useEffect } from "react";
-const supabaseUrl = 'https://alvswqerdgtecikravxz.supabase.co'
-const supabaseKey = import.meta.env.VITE_SUPABASE_KEY
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { useState, useEffect } from "react";
+import { supabase } from "./lib/supabase";
 
 export function App() {
   const [name, setName] = useState('');
@@ -12,7 +8,6 @@ export function App() {
   const [notificationDays, setNotificationDays] = useState('3');
   const [isRecurring, setIsRecurring] = useState(false);
   const [services, setServices] = useState([]);
-  const [isPaid, setIsPaid] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,7 +17,7 @@ export function App() {
       amount: parseFloat(amount),
       notificationDays: parseInt(notificationDays),
       isRecurring: isRecurring,
-      isPaid: isPaid
+      isPaid: false
     };
 
     const { error } = await supabase
@@ -48,14 +43,12 @@ export function App() {
     setAmount('');
     setNotificationDays('3');
     setIsRecurring(false);
-    setIsPaid(false);
   };
 
   const fetchServices = async () => {
     const { data, error } = await supabase
       .from('services')
-      .select('*')
-      .order('dueDate', { ascending: true });
+      .select('*');
 
     if (error) {
       console.error('Error fetching services:', error);
@@ -70,7 +63,62 @@ export function App() {
       .from('services')
       .update({ isPaid: true })
       .eq('id', serviceId)
-    fetchServices();
+
+    if (error) {
+      console.error('Error updating service:', error);
+      return;
+    }
+
+    if (data[serviceId].isRecurring) {
+      const nextDueDate = new Date(dueDate);
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+
+      const { error } = await supabase
+        .from('services')
+        .insert({
+          name: newService.name,
+          dueDate: nextDueDate.toISOString().split('T')[0],
+          amount: newService.amount,
+          notificationDays: newService.notificationDays,
+          isRecurring: newService.isRecurring,
+          isPaid: newService.isPaid
+        });
+
+      if (error) {
+        console.error('Error inserting recurring service:', error);
+        return;
+      }
+    }
+
+    await fetchServices();
+  }
+
+  const handleUnpayment = async (serviceId) => {
+    const { error } = await supabase
+      .from('services')
+      .update({ isPaid: false })
+      .eq('id', serviceId)
+
+    if (error) {
+      console.error('Error updating service:', error);
+      return;
+    }
+
+    await fetchServices();
+  }
+
+  const handleDelete = async (serviceId) => {
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', serviceId)
+
+    if (error) {
+      console.error('Error deleting service:', error);
+      return;
+    }
+
+    await fetchServices();
   }
 
   useEffect(() => {
@@ -89,7 +137,7 @@ export function App() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej: Agua, Luz, Internet"
+              placeholder="Agua, Luz, Internet..."
               className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
@@ -152,19 +200,41 @@ export function App() {
       </form>
 
       <section>
-        <h2 className="text-xl font-bold text-foreground mb-4">Servicios Registrados</h2>
-        {services.length === 0 ? (<p>No hay servicios registrados.</p>)
-          : (<ul className="space-y-4">
-            {services.filter(service => !service.isPaid).map((service) => (
-              <div key={service.id}>
-                <li >{service.name}</li>
-                <li>{service.dueDate}</li>
-                <li>{service.amount}</li>
-                <button onClick={() => handlePayment(service.id)}>Marcar como pagado</button>
-              </div>
-            ))
-            }
-          </ul>
+        {
+          services.filter(service => !service.isPaid).length > 0 && (
+            <>
+              <h2 className="text-xl font-bold text-foreground mb-4 mt-8">Servicios Pendientes</h2>
+              <ul className="space-y-4">
+                {services.filter(service => !service.isPaid).map((service) => (
+                  <div key={service.id}>
+                    <li>{service.name}</li>
+                    <li>{service.dueDate}</li>
+                    <li>{service.amount}</li>
+                    <button onClick={() => handlePayment(service.id)}>Marcar como pagado</button>
+                  </div>
+                ))
+                }
+              </ul>
+            </>
+          )
+        }
+        {
+          services.filter(service => service.isPaid).length > 0 && (
+            <>
+              <h2 className="text-xl font-bold text-foreground mb-4 mt-8">Servicios Pagados</h2>
+              <ul className="space-y-4">
+                {services.filter(service => service.isPaid).map((service) => (
+                  <div key={service.id}>
+                    <li>{service.name}</li>
+                    <li>{service.dueDate}</li>
+                    <li>{service.amount}</li>
+                    <button onClick={() => handleUnpayment(service.id)}>Marcar como no pagado</button>
+                    <button onClick={() => handleDelete(service.id)}>Eliminar</button>
+                  </div>
+                ))
+                }
+              </ul>
+            </>
           )
         }
       </section >
