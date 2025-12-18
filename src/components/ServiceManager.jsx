@@ -1,5 +1,5 @@
-import { supabase } from './lib/supabase'
 import { toast } from 'sonner'
+import { supabase } from '../lib/supabase'
 
 export const fetchServices = async () => {
   const { data, error } = await supabase.from('services').select('*')
@@ -20,7 +20,7 @@ export const fetchServices = async () => {
   if (error) {
     toast.error('Error al obtener los servicios.')
   } else {
-    setServices(data)
+    return data
   }
 }
 
