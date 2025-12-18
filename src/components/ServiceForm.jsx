@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { supabase } from '../lib/supabase'
 import { toast, Toaster } from 'sonner'
-import { fetchServices } from '../App'
 
 export function ServiceForm() {
   const [name, setName] = useState('')
