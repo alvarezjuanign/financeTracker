@@ -1,4 +1,57 @@
+import { useState } from "react"
+import { supabase } from '../lib/supabase'
+import { toast, Toaster } from 'sonner'
+import { fetchServices } from '../App'
+
 export function ServiceForm() {
+  const [name, setName] = useState('')
+  const [dueDate, setDueDate] = useState('')
+  const [amount, setAmount] = useState('')
+  const [notificationDays, setNotificationDays] = useState('3')
+  const [isRecurring, setIsRecurring] = useState(false)
+
+  const onSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!name || !dueDate) {
+      toast.error('Por favor, completa todos los campos obligatorios.')
+      return
+    }
+
+    const newService = {
+      name: name,
+      dueDate: dueDate,
+      amount: parseFloat(amount),
+      notificationDays: parseInt(notificationDays),
+      isRecurring: isRecurring,
+      isPaid: false,
+    }
+
+    const { error } = await supabase.from('services').insert({
+      name: newService.name,
+      dueDate: newService.dueDate,
+      amount: newService.amount,
+      notificationDays: newService.notificationDays,
+      isRecurring: newService.isRecurring,
+      isPaid: newService.isPaid,
+    })
+
+    if (error) {
+      toast.error('Error al agregar el servicio.')
+      return
+    } else {
+      toast.success('Servicio agregado correctamente.')
+    }
+
+    await fetchServices()
+
+    setName('')
+    setDueDate('')
+    setAmount('')
+    setNotificationDays('3')
+    setIsRecurring(false)
+  }
+
   return (
     <form
       onSubmit={onSubmit}
