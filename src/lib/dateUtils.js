@@ -1,26 +1,26 @@
-export function getDaysUntilDue(dueDate) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+export const urgencyStyles = {
+  high: {
+    card: "border-red-500/40 bg-red-500/10",
+    badge: "bg-red-500/15 text-red-600 dark:text-red-400",
+  },
+  medium: {
+    card: "border-yellow-500/40 bg-yellow-500/10",
+    badge: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400",
+  },
+  low: {
+    card: "border-emerald-500/40 bg-emerald-500/10",
+    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  },
+};
 
-  const dueDateObj = new Date(dueDate)
-  dueDateObj.setHours(0, 0, 0, 0)
+export const getUrgency = (due_date) => {
+  const today = new Date();
+  const due = new Date(due_date);
 
-  const diffTime = dueDateObj.getTime() - today.getTime()
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  const diffTime = due - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  return diffDays
-}
-
-export function isUrgent(dueDate, notificationDays) {
-  const daysUntil = getDaysUntilDue(dueDate)
-  return daysUntil <= notificationDays && daysUntil >= 0
-}
-
-export function getStatusColor(daysUntil, isPaid) {
-  if (isPaid) return "text-green-600 dark:text-green-400"
-  if (daysUntil < 0) return "text-red-600 dark:text-red-400"
-  if (daysUntil === 0) return "text-red-600 dark:text-red-400"
-  if (daysUntil === 1) return "text-orange-600 dark:text-orange-400"
-  if (daysUntil <= 3) return "text-orange-600 dark:text-orange-400"
-  return "text-slate-500"
-}
+  if (diffDays > 7) return "low";
+  if (diffDays > 3) return "medium";
+  return "high";
+};
