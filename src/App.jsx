@@ -1,243 +1,304 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
+import { Toaster, toast } from "sonner";
+import { TrashIcon } from "./icons/iconsTable";
+import { getUrgency, urgencyStyles } from "./lib/dateUtils";
+import { LoginForm } from "./components/LoginForm";
+import { ServiceForm } from "./components/ServiceForm";
 
 export function App() {
-  const [name, setName] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [amount, setAmount] = useState('');
-  const [notificationDays, setNotificationDays] = useState('3');
-  const [isRecurring, setIsRecurring] = useState(false);
   const [services, setServices] = useState([]);
+  const [tab, setTab] = useState("pending");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newService = {
-      name: name,
-      dueDate: dueDate,
-      amount: parseFloat(amount),
-      notificationDays: parseInt(notificationDays),
-      isRecurring: isRecurring,
-      isPaid: false
-    };
-
-    const { error } = await supabase
-      .from('services')
-      .insert({
-        name: newService.name,
-        dueDate: newService.dueDate,
-        amount: newService.amount,
-        notificationDays: newService.notificationDays,
-        isRecurring: newService.isRecurring,
-        isPaid: newService.isPaid
-      });
-
-    if (error) {
-      console.error('Error inserting service:', error);
-      return;
-    }
-
-    await fetchServices();
-
-    setName('');
-    setDueDate('');
-    setAmount('');
-    setNotificationDays('3');
-    setIsRecurring(false);
-  };
+  const [user, setUser] = useState(null);
 
   const fetchServices = async () => {
+    if (!user) return;
     const { data, error } = await supabase
-      .from('services')
-      .select('*');
+      .from("services")
+      .select("*")
+      .eq("user_id", user.id);
 
     if (error) {
-      console.error('Error fetching services:', error);
+      toast.error("Error al obtener los servicios.");
     } else {
-      console.log('Fetched services:', data);
       setServices(data);
     }
-  }
+  };
 
-  const handlePayment = async (serviceId) => {
-    const { data, error } = await supabase
-      .from('services')
-      .update({ isPaid: true })
-      .eq('id', serviceId)
+  const markAsPaid = async (service) => {
+    const { error } = await supabase
+      .from("services")
+      .update({ is_paid: true })
+      .eq("id", service.id);
 
-    if (error) {
-      console.error('Error updating service:', error);
-      return;
-    }
 
-    if (data[serviceId].isRecurring) {
-      const nextDueDate = new Date(dueDate);
+    if (service.is_recurring) {
+      const nextDueDate = new Date(service.due_date);
       nextDueDate.setMonth(nextDueDate.getMonth() + 1);
 
-      const { error } = await supabase
-        .from('services')
-        .insert({
-          name: newService.name,
-          dueDate: nextDueDate.toISOString().split('T')[0],
-          amount: newService.amount,
-          notificationDays: newService.notificationDays,
-          isRecurring: newService.isRecurring,
-          isPaid: newService.isPaid
-        });
+      const { error } = await supabase.from("services").insert({
+        name: service.name,
+        due_date: nextDueDate.toISOString().split("T")[0],
+        amount: service.amount,
+        notificationDays: service.notificationDays,
+        is_recurring: service.is_recurring,
+        is_paid: false,
+        user_id: service.user_id,
+      });
 
       if (error) {
-        console.error('Error inserting recurring service:', error);
+        toast.error("Error al insertar el servicio recurrente.");
         return;
       }
     }
 
-    await fetchServices();
-  }
-
-  const handleUnpayment = async (serviceId) => {
-    const { error } = await supabase
-      .from('services')
-      .update({ isPaid: false })
-      .eq('id', serviceId)
-
     if (error) {
-      console.error('Error updating service:', error);
+      toast.error("Error al actualizar el servicio.");
       return;
     }
 
     await fetchServices();
-  }
+  };
 
-  const handleDelete = async (serviceId) => {
+  const deleteService = async (service) => {
     const { error } = await supabase
-      .from('services')
+      .from("services")
       .delete()
-      .eq('id', serviceId)
+      .eq("id", service.id);
 
     if (error) {
-      console.error('Error deleting service:', error);
+      toast.error("Error al eliminar el servicio.");
       return;
     }
 
     await fetchServices();
-  }
+  };
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user)
+    })
+  }, []);
 
   useEffect(() => {
     fetchServices();
-  }, []);
+  }, [user]);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-ES", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const paidServices = services.filter((service) => service.is_paid);
+  const pendingServices = services
+    .filter((service) => !service.is_paid)
+    .map((service) => {
+      return {
+        ...service,
+        urgency: getUrgency(service.due_date),
+      };
+    });
+
+  const handleLogin = async ({ email, password }) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error("Error al iniciar sesión.");
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    setUser(userData.user);
+    toast.success("Inicio de sesión exitoso.");
+  };
+
+  const addService = async (service) => {
+    const { data } = await supabase.auth.getUser();
+
+    if (!service.name || !service.due_date) {
+      toast.error("Por favor completa los campos obligatorios.");
+      return;
+    }
+
+    if (!data?.user) {
+      toast.error("Usuario no autenticado.");
+      return;
+    }
+
+    const { error } = await supabase.from("services").insert({
+      ...service,
+      is_paid: false,
+      user_id: data.user.id,
+    });
+
+    if (error) {
+      toast.error("Error al agregar el servicio.");
+      return;
+    }
+
+    toast.success("Servicio agregado correctamente.");
+
+    await fetchServices();
+  };
+
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-border mb-8">
-        <h2 className="text-xl font-bold text-foreground mb-4">Agregar Nuevo Servicio</h2>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Nombre del Servicio</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Agua, Luz, Internet..."
-              className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Fecha de Vencimiento</label>
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Monto a Pagar</label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="0.00"
-              step="0.01"
-              min="0"
-              className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">Notificar (días antes)</label>
-            <select
-              value={notificationDays}
-              onChange={(e) => setNotificationDays(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+    <main className="max-w-3xl mx-auto p-4">
+      {
+        !user ? (
+          <LoginForm onLogin={handleLogin} />
+        ) : (
+          <>
+            <button
+              onClick={() => setUser(null)}
+              className="mb-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
             >
-              <option value="1">1 día antes</option>
-              <option value="2">2 días antes</option>
-              <option value="3">3 días antes</option>
-              <option value="5">5 días antes</option>
-              <option value="7">1 semana antes</option>
-            </select>
-          </div>
-        </div>
+              Logout
+            </button>
+            <ServiceForm onAddService={addService} />
+            <section>
+              <div className="flex gap-4 border-b border-border mb-4">
+                <button
+                  onClick={() => setTab("pending")}
+                  className={`pb-2 text-sm font-medium ${tab === "pending" ? "border-b-2 border-blue-500" : ""
+                    }`}
+                >
+                  Pendientes ({pendingServices.length})
+                </button>
 
-        <div className="flex items-center gap-3 mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <input
-            type="checkbox"
-            id="isRecurring"
-            checked={isRecurring}
-            onChange={(e) => setIsRecurring(e.target.checked)}
-            className="w-4 h-4 text-primary cursor-pointer"
-          />
-          <label htmlFor="isRecurring" className="text-sm font-medium text-foreground cursor-pointer">
-            Servicio mensual
-          </label>
-        </div>
+                <button
+                  onClick={() => setTab("paid")}
+                  className={`pb-2 text-sm font-medium ${tab === "paid" ? "border-b-2 border-blue-500" : ""
+                    }`}
+                >
+                  Pagados ({paidServices.length})
+                </button>
+              </div>
+              {tab === "pending" ? (
+                <>
+                  <h2 className="text-xl font-bold mb-4 mt-8">
+                    Servicios Pendientes
+                  </h2>
 
-        <button type="submit" className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90">
-          Agregar Servicio
-        </button>
-      </form>
+                  <ul className="space-y-4">
+                    {pendingServices.length > 0 ? (
+                      pendingServices.map((service) => (
+                        <li
+                          key={service.id}
+                          className={`rounded-lg border p-4 transition-colors ${urgencyStyles[service.urgency].card}`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h3 className="font-medium leading-none">
+                                {service.name}
+                              </h3>
+                              <p className="text-sm">
+                                Vence: {formatDate(service.due_date)}
+                              </p>
+                            </div>
 
-      <section>
-        {
-          services.filter(service => !service.isPaid).length > 0 && (
-            <>
-              <h2 className="text-xl font-bold text-foreground mb-4 mt-8">Servicios Pendientes</h2>
-              <ul className="space-y-4">
-                {services.filter(service => !service.isPaid).map((service) => (
-                  <div key={service.id}>
-                    <li>{service.name}</li>
-                    <li>{service.dueDate}</li>
-                    <li>{service.amount}</li>
-                    <button onClick={() => handlePayment(service.id)}>Marcar como pagado</button>
+                            <span
+                              className={`rounded-md px-2 py-0.5 text-xs font-medium ${urgencyStyles[service.urgency].badge}`}
+                            >
+                              {service.urgency === "high"
+                                ? "Urgente"
+                                : service.urgency === "medium"
+                                  ? "Próximo"
+                                  : "En fecha"}
+                            </span>
+                          </div>
+
+                          <p className="text-sm mb-3">
+                            Monto:{" "}
+                            <span className="font-medium">$ {service.amount}</span>
+                          </p>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => markAsPaid(service)}
+                              className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
+                            >
+                              Marcar como pagado
+                            </button>
+
+                            <button
+                              onClick={() => deleteService(service)}
+                              className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No hay servicios pendientes.
+                      </p>
+                    )}
+                  </ul>
+                </>
+              ) : (
+                <>
+                  <h2 className="text-xl font-bold mb-4 mt-8">Servicios Pagados</h2>
+                  <div className="overflow-hidden rounded-lg border border-border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-400/40 border-b">
+                        <tr>
+                          <th className="px-4 py-3 text-left font-medium">
+                            Servicio
+                          </th>
+                          <th className="px-4 py-3 text-left font-medium">
+                            Vencimiento
+                          </th>
+                          <th className="px-4 py-3 text-right font-medium">Monto</th>
+                          <th className="px-4 py-3 text-right font-medium">
+                            Acciones
+                          </th>
+                        </tr>
+                      </thead>
+                      {paidServices.map((service) => (
+                        <tbody key={service.id}>
+                          <tr className="border-b transition-colors">
+                            <td className="px-4 py-3 font-medium">{service.name}</td>
+
+                            <td className="px-4 py-3">
+                              {formatDate(service.due_date)}
+                            </td>
+
+                            <td className="px-4 py-3 text-right font-medium">
+                              $ {service.amount}
+                            </td>
+
+                            <td className="px-4 py-3">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  className="p-2 rounded-md hover:bg-red-500/10 text-red-600 transition-colors hover:cursor-pointer"
+                                  title="Eliminar"
+                                  onClick={() => deleteService(service)}
+                                >
+                                  <TrashIcon className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      ))}
+                    </table>
                   </div>
-                ))
-                }
-              </ul>
-            </>
-          )
-        }
-        {
-          services.filter(service => service.isPaid).length > 0 && (
-            <>
-              <h2 className="text-xl font-bold text-foreground mb-4 mt-8">Servicios Pagados</h2>
-              <ul className="space-y-4">
-                {services.filter(service => service.isPaid).map((service) => (
-                  <div key={service.id}>
-                    <li>{service.name}</li>
-                    <li>{service.dueDate}</li>
-                    <li>{service.amount}</li>
-                    <button onClick={() => handleUnpayment(service.id)}>Marcar como no pagado</button>
-                    <button onClick={() => handleDelete(service.id)}>Eliminar</button>
-                  </div>
-                ))
-                }
-              </ul>
-            </>
-          )
-        }
-      </section >
-    </>
+                </>
+              )}
+            </section>
+          </>)
+      }
+      <Toaster position="top-right" richColors />
+    </main>
   );
-};
+}
