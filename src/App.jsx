@@ -9,7 +9,7 @@ import { ServiceForm } from "./components/ServiceForm";
 import { useServices } from "./hooks/useServices";
 
 export function App() {
-  const { services, fetchServices, markAsPaid, deleteService } = useServices();
+  const { services, addService, fetchServices, markAsPaid, deleteService } = useServices();
   const [tab, setTab] = useState("pending");
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -24,15 +24,6 @@ export function App() {
   useEffect(() => {
     fetchServices();
   }, [user]);
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-ES", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   const paidServices = services.filter((service) => service.is_paid);
   const pendingServices = services
@@ -59,36 +50,6 @@ export function App() {
     setUser(userData.user);
     toast.success("Inicio de sesión exitoso.");
   };
-
-  const addService = async (service) => {
-    const { data } = await supabase.auth.getUser();
-
-    if (!service.name || !service.due_date) {
-      toast.error("Por favor completa los campos obligatorios.");
-      return;
-    }
-
-    if (!data?.user) {
-      toast.error("Usuario no autenticado.");
-      return;
-    }
-
-    const { error } = await supabase.from("services").insert({
-      ...service,
-      is_paid: false,
-      user_id: data.user.id,
-    });
-
-    if (error) {
-      toast.error("Error al agregar el servicio.");
-      return;
-    }
-
-    toast.success("Servicio agregado correctamente.");
-
-    await fetchServices();
-  };
-
 
   return (
     <main className="max-w-3xl mx-auto p-4">
@@ -127,10 +88,10 @@ export function App() {
                   <h2 className="text-xl font-bold mb-4 mt-8">
                     Servicios Pendientes
                   </h2>
-                  <ServiceCard pendingServices={pendingServices} formatDate={formatDate} markAsPaid={markAsPaid} deleteService={deleteService} />
+                  <ServiceCard pendingServices={pendingServices} markAsPaid={markAsPaid} deleteService={deleteService} />
                 </>
               ) : (
-                <TablePaidServices paidServices={paidServices} deleteService={deleteService} formatDate={formatDate} />
+                <TablePaidServices paidServices={paidServices} deleteService={deleteService} />
               )}
             </section>
           </>)
