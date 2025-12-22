@@ -1,6 +1,7 @@
 import { TrashIcon } from "../icons/iconsTable"
+import { formatDate } from "../lib/dateUtils"
 
-export function TablePaidServices({ paidServices, deleteService, formatDate }) {
+export function TablePaidServices({ paidServices, deleteService }) {
   return (
     <>
       <h2 className="text-xl font-bold mb-4 mt-8">Servicios Pagados</h2>
