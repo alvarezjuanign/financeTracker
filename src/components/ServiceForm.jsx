@@ -7,7 +7,7 @@ export const ServiceForm = ({ onAddService }) => {
   const [notification_days, setNotificationDays] = useState("3");
   const [is_recurring, setIsRecurring] = useState(false);
 
-  const hamdleSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     await onAddService({
@@ -27,7 +27,7 @@ export const ServiceForm = ({ onAddService }) => {
 
   return (
     <form
-      onSubmit={hamdleSubmit}
+      onSubmit={handleSubmit}
       className="rounded-lg p-6 border border-border mb-8"
     >
       <h2 className="text-xl font-bold text-foreground mb-4">
