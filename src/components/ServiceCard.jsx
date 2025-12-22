@@ -1,6 +1,6 @@
-import { urgencyStyles } from "../lib/dateUtils";
+import { urgencyStyles, formatDate } from "../lib/dateUtils";
 
-export const ServiceCard = ({ pendingServices, formatDate, markAsPaid, deleteService }) => {
+export const ServiceCard = ({ pendingServices, markAsPaid, deleteService }) => {
   <ul className="space-y-4">
     {pendingServices.length > 0 ? (
       pendingServices.map((service) => (
