@@ -3,7 +3,7 @@ import { getMessaging } from "firebase/messaging";
 
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBKivfg3SRbG4oeMuKirQ5B8VpfjhS2WsU",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "financetracker-e64c5.firebaseapp.com",
   projectId: "financetracker-e64c5",
   storageBucket: "financetracker-e64c5.firebasestorage.app",
