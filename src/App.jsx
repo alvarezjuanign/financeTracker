@@ -9,10 +9,11 @@ import { ServiceForm } from "./components/ServiceForm";
 export function App() {
   const [services, setServices] = useState([]);
   const [tab, setTab] = useState("pending");
-
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
   const fetchServices = async () => {
+    setLoading(true);
     if (!user) return;
     const { data, error } = await supabase
       .from("services")
@@ -24,6 +25,7 @@ export function App() {
     } else {
       setServices(data);
     }
+    setLoading(false);
   };
 
   const markAsPaid = async (service) => {
@@ -153,7 +155,7 @@ export function App() {
   return (
     <main className="max-w-3xl mx-auto p-4">
       {
-        !user ? (
+        !user && !loading ? (
           <LoginForm onLogin={handleLogin} />
         ) : (
           <>
