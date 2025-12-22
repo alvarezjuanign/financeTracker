@@ -68,5 +68,35 @@ export function useServices(user) {
     await fetchServices();
   };
 
-  return { services, fetchServices, markAsPaid, deleteService };
+  const addService = async (service) => {
+    const { data } = await supabase.auth.getUser();
+
+    if (!service.name || !service.due_date) {
+      toast.error("Por favor completa los campos obligatorios.");
+      return;
+    }
+
+    if (!data?.user) {
+      toast.error("Usuario no autenticado.");
+      return;
+    }
+
+    const { error } = await supabase.from("services").insert({
+      ...service,
+      is_paid: false,
+      user_id: data.user.id,
+    });
+
+    if (error) {
+      toast.error("Error al agregar el servicio.");
+      return;
+    }
+
+    toast.success("Servicio agregado correctamente.");
+
+    await fetchServices();
+  };
+
+
+  return { services, addService, fetchServices, markAsPaid, deleteService };
 }
