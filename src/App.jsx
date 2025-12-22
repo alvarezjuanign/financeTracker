@@ -2,85 +2,23 @@ import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import { Toaster, toast } from "sonner";
 import { TablePaidServices } from "./components/TablePaidServices";
-import { getUrgency, urgencyStyles } from "./lib/dateUtils";
+import { getUrgency } from "./lib/dateUtils";
+import { ServiceCard } from "./components/ServiceCard";
 import { LoginForm } from "./components/LoginForm";
 import { ServiceForm } from "./components/ServiceForm";
+import { useServices } from "./hooks/useServices";
 
 export function App() {
-  const [services, setServices] = useState([]);
+  const { services, fetchServices, markAsPaid, deleteService } = useServices();
   const [tab, setTab] = useState("pending");
-  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
-
-  const fetchServices = async () => {
-    setLoading(true);
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("services")
-      .select("*")
-      .eq("user_id", user.id);
-
-    if (error) {
-      toast.error("Error al obtener los servicios.");
-    } else {
-      setServices(data);
-    }
-    setLoading(false);
-  };
-
-  const markAsPaid = async (service) => {
-    const { error } = await supabase
-      .from("services")
-      .update({ is_paid: true })
-      .eq("id", service.id);
-
-
-    if (service.is_recurring) {
-      const nextDueDate = new Date(service.due_date);
-      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
-
-      const { error } = await supabase.from("services").insert({
-        name: service.name,
-        due_date: nextDueDate.toISOString().split("T")[0],
-        amount: service.amount,
-        notificationDays: service.notificationDays,
-        is_recurring: service.is_recurring,
-        is_paid: false,
-        user_id: service.user_id,
-      });
-
-      if (error) {
-        toast.error("Error al insertar el servicio recurrente.");
-        return;
-      }
-    }
-
-    if (error) {
-      toast.error("Error al actualizar el servicio.");
-      return;
-    }
-
-    await fetchServices();
-  };
-
-  const deleteService = async (service) => {
-    const { error } = await supabase
-      .from("services")
-      .delete()
-      .eq("id", service.id);
-
-    if (error) {
-      toast.error("Error al eliminar el servicio.");
-      return;
-    }
-
-    await fetchServices();
-  };
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user)
     })
+    setAuthLoading(false);
   }, []);
 
   useEffect(() => {
@@ -155,7 +93,7 @@ export function App() {
   return (
     <main className="max-w-3xl mx-auto p-4">
       {
-        !user && !loading ? (
+        !user && authLoading ? (
           <LoginForm onLogin={handleLogin} />
         ) : (
           <>
@@ -189,63 +127,7 @@ export function App() {
                   <h2 className="text-xl font-bold mb-4 mt-8">
                     Servicios Pendientes
                   </h2>
-
-                  <ul className="space-y-4">
-                    {pendingServices.length > 0 ? (
-                      pendingServices.map((service) => (
-                        <li
-                          key={service.id}
-                          className={`rounded-lg border p-4 transition-colors ${urgencyStyles[service.urgency].card}`}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h3 className="font-medium leading-none">
-                                {service.name}
-                              </h3>
-                              <p className="text-sm">
-                                Vence: {formatDate(service.due_date)}
-                              </p>
-                            </div>
-
-                            <span
-                              className={`rounded-md px-2 py-0.5 text-xs font-medium ${urgencyStyles[service.urgency].badge}`}
-                            >
-                              {service.urgency === "high"
-                                ? "Urgente"
-                                : service.urgency === "medium"
-                                  ? "Próximo"
-                                  : "En fecha"}
-                            </span>
-                          </div>
-
-                          <p className="text-sm mb-3">
-                            Monto:{" "}
-                            <span className="font-medium">$ {service.amount}</span>
-                          </p>
-
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => markAsPaid(service)}
-                              className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
-                            >
-                              Marcar como pagado
-                            </button>
-
-                            <button
-                              onClick={() => deleteService(service)}
-                              className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-red-500/10 text-red-600 hover:bg-red-500/20 transition-colors"
-                            >
-                              Eliminar
-                            </button>
-                          </div>
-                        </li>
-                      ))
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        No hay servicios pendientes.
-                      </p>
-                    )}
-                  </ul>
+                  <ServiceCard pendingServices={pendingServices} formatDate={formatDate} markAsPaid={markAsPaid} deleteService={deleteService} />
                 </>
               ) : (
                 <TablePaidServices paidServices={paidServices} deleteService={deleteService} formatDate={formatDate} />
