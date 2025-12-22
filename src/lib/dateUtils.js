@@ -24,3 +24,13 @@ export const getUrgency = (due_date) => {
   if (diffDays > 3) return "medium";
   return "high";
 };
+
+
+export const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("es-ES", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
