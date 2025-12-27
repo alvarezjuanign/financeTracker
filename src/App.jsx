@@ -11,9 +11,9 @@ import { getToken, onMessage } from "firebase/messaging";
 import { messaging } from "./firebase";
 
 export function App() {
-  const { services, addService, fetchServices, markAsPaid, deleteService } = useServices();
-  const [tab, setTab] = useState("pending");
   const [user, setUser] = useState(null);
+  const { services, addService, fetchServices, markAsPaid, deleteService } = useServices(user);
+  const [tab, setTab] = useState("pending");
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -36,7 +36,6 @@ export function App() {
 
   useEffect(() => {
     if (!user) return;
-
     fetchServices();
 
     const activateMesaging = async () => {
