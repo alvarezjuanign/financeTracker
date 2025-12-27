@@ -29,7 +29,6 @@ export function App() {
 
   useEffect(() => {
     onMessage(messaging, (payload) => {
-      console.log('Message received. ', payload);
       toast.success(payload.notification.title);
     });
   }, []);
