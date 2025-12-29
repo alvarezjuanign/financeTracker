@@ -60,8 +60,6 @@ export function App() {
       } catch (err) {
         console.log('An error occurred while retrieving token. ', err);
       }
-
-      return <p>{token}</p>;
     };
 
     activateMesaging();
