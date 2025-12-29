@@ -40,7 +40,7 @@ export function App() {
     const activateMesaging = async () => {
       try {
         const token = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_MESSSAGING });
-        console.log('FCM Token:', token);
+        toast(token);
 
         if (!token) return;
 
