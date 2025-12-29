@@ -40,7 +40,6 @@ export function App() {
     const activateMesaging = async () => {
       try {
         const token = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_MESSSAGING });
-        toast(token);
 
         if (!token) return;
 
@@ -61,6 +60,8 @@ export function App() {
       } catch (err) {
         console.log('An error occurred while retrieving token. ', err);
       }
+
+      return <p>{token}</p>;
     };
 
     activateMesaging();
