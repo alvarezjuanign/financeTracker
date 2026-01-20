@@ -4,7 +4,6 @@ export const ServiceForm = ({ onAddService }) => {
   const [name, setName] = useState("");
   const [due_date, setDueDate] = useState("");
   const [amount, setAmount] = useState("");
-  const [notification_days, setNotificationDays] = useState("3");
   const [is_recurring, setIsRecurring] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -14,21 +13,19 @@ export const ServiceForm = ({ onAddService }) => {
       name,
       due_date,
       amount: parseFloat(amount),
-      notification_days: parseInt(notification_days),
       is_recurring,
     });
 
     setName("");
     setDueDate("");
     setAmount("");
-    setNotificationDays("3");
     setIsRecurring(false);
   };
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg p-6 border border-border mb-8"
+      className="rounded-lg p-6 border border-gray-200 shadow-2xl mb-8"
     >
       <h2 className="text-xl font-bold text-foreground mb-4">
         Agregar Nuevo Servicio
@@ -60,7 +57,7 @@ export const ServiceForm = ({ onAddService }) => {
           />
         </div>
 
-        <div>
+        <div className="md:col-span-2">
           <label className="block text-sm font-medium text-foreground mb-2">
             Monto a Pagar
           </label>
@@ -73,23 +70,6 @@ export const ServiceForm = ({ onAddService }) => {
             min="0"
             className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
           />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Notificar (días antes)
-          </label>
-          <select
-            value={notification_days}
-            onChange={(e) => setNotificationDays(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border border-input focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="1">1 día antes</option>
-            <option value="2">2 días antes</option>
-            <option value="3">3 días antes</option>
-            <option value="5">5 días antes</option>
-            <option value="7">1 semana antes</option>
-          </select>
         </div>
       </div>
 
