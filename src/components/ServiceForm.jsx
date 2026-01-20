@@ -33,7 +33,7 @@ export const ServiceForm = ({ onAddService }) => {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className="text-sm font-medium text-foreground mb-2">
             Nombre del Servicio
           </label>
           <input
@@ -46,7 +46,7 @@ export const ServiceForm = ({ onAddService }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className="text-sm font-medium text-foreground mb-2">
             Fecha de Vencimiento
           </label>
           <input
@@ -58,7 +58,7 @@ export const ServiceForm = ({ onAddService }) => {
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-foreground mb-2">
+          <label className="text-sm font-medium text-foreground mb-2">
             Monto a Pagar
           </label>
           <input
