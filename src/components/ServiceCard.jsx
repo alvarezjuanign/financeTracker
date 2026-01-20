@@ -2,7 +2,7 @@ import { urgencyStyles, formatDate } from "../lib/dateUtils";
 
 export const ServiceCard = ({ pendingServices, markAsPaid, deleteService }) => {
   return (
-    <ul className="space-y-4 grid grid-cols-2 gap-4">
+    <ul className="space-y-2 grid gap-2 grid-cols-1 sm:grid-cols-2">
       {pendingServices.length > 0 ? (
         pendingServices.map((service) => (
           <li
@@ -20,7 +20,7 @@ export const ServiceCard = ({ pendingServices, markAsPaid, deleteService }) => {
               </div>
 
               <span
-                className={`rounded-md px-2 py-0.5 text-xs font-medium ${urgencyStyles[service.urgency].badge}`}
+                className={`rounded-md px-2 py-0.5 text-xs font-medium hidden md:block ${urgencyStyles[service.urgency].badge}`}
               >
                 {service.urgency === "high"
                   ? "Urgente"
@@ -35,7 +35,7 @@ export const ServiceCard = ({ pendingServices, markAsPaid, deleteService }) => {
               <span className="font-medium">$ {service.amount}</span>
             </p>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-col md:flex-row">
               <button
                 onClick={() => markAsPaid(service)}
                 className="inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium bg-green-500/10 text-green-600 hover:bg-green-500/20 transition-colors"
