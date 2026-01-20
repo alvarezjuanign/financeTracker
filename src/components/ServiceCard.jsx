@@ -2,7 +2,7 @@ import { urgencyStyles, formatDate } from "../lib/dateUtils";
 
 export const ServiceCard = ({ pendingServices, markAsPaid, deleteService }) => {
   return (
-    <ul className="space-y-4">
+    <ul className="space-y-4 grid grid-cols-2 gap-4">
       {pendingServices.length > 0 ? (
         pendingServices.map((service) => (
           <li
