@@ -125,6 +125,14 @@ export function App() {
     },
   ]);
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <p>Cargando sesión...</p>
+      </div>
+    );
+  }
+
   return (
     <main className="max-w-3xl mx-auto">
       <RouterProvider router={router} />
