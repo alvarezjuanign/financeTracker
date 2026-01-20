@@ -7,13 +7,19 @@ import { ServiceCard } from "./components/ServiceCard";
 import { LoginForm } from "./components/LoginForm";
 import { ServiceForm } from "./components/ServiceForm";
 import { useServices } from "./hooks/useServices";
-import { getToken, onMessage } from "firebase/messaging";
-import { messaging } from "./firebase";
+import FinLogo from "../public/icons/FinTrackerLogo.svg";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+  Link,
+  Outlet,
+} from "react-router";
 
 export function App() {
   const [user, setUser] = useState(null);
-  const { services, addService, fetchServices, markAsPaid, deleteService } = useServices(user);
-  const [tab, setTab] = useState("pending");
+  const { services, addService, fetchServices, markAsPaid, deleteService } =
+    useServices(user);
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
@@ -28,41 +34,8 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    onMessage(messaging, (payload) => {
-      toast.success(payload.notification.title);
-    });
-  }, []);
-
-  useEffect(() => {
     if (!user) return;
     fetchServices();
-
-    const activateMesaging = async () => {
-      try {
-        const token = await getToken(messaging, { vapidKey: import.meta.env.VITE_FIREBASE_MESSSAGING });
-
-        if (!token) return;
-
-        const { error } = await supabase
-          .from('fcm_tokens')
-          .upsert({
-            token: token,
-            user_id: user.id,
-            last_used_at: new Date().toISOString()
-          },
-            {
-              onConflict: 'token'
-            });
-
-        if (error) {
-          console.error('Error saving FCM token:', error);
-        }
-      } catch (err) {
-        console.log('An error occurred while retrieving token. ', err);
-      }
-    };
-
-    activateMesaging();
   }, [user]);
 
   const paidServices = services.filter((service) => service.is_paid);
@@ -83,7 +56,7 @@ export function App() {
     }
     setUser(null);
     toast.success("Sesión cerrada exitosamente.");
-  }
+  };
 
   const handleLogin = async ({ email, password }) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -101,53 +74,88 @@ export function App() {
     toast.success("Inicio de sesión exitoso.");
   };
 
-  return (
-    <main className="max-w-3xl mx-auto p-4">
-      {authLoading && <p>Cargando...</p>}
-      {
-        !user ? (
-          <LoginForm onLogin={handleLogin} />
-        ) : (
-          <>
-            <button
-              onClick={handleLogout}
-              className="mb-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
-            >
-              Logout
-            </button>
-            <ServiceForm onAddService={addService} />
-            <section>
-              <div className="flex gap-4 border-b border-border mb-4">
-                <button
-                  onClick={() => setTab("pending")}
-                  className={`pb-2 text-sm font-medium ${tab === "pending" ? "border-b-2 border-blue-500" : ""
-                    }`}
-                >
-                  Pendientes ({pendingServices.length})
-                </button>
+  const router = createBrowserRouter([
+    {
+      path: "/",
+      element: user ? (
+        <DashboardLayout user={user} onLogout={handleLogout} />
+      ) : (
+        <Navigate to="/login" />
+      ),
+      children: [
+        {
+          index: true,
+          element: (
+            <>
+              <ServiceForm onAddService={addService} />
+              <h2 className="text-xl font-bold mb-4 mt-8">
+                Servicios Pendientes
+              </h2>
+              <ServiceCard
+                pendingServices={pendingServices}
+                markAsPaid={markAsPaid}
+                deleteService={deleteService}
+              />
+            </>
+          ),
+        },
+        {
+          path: "pagados",
+          element: (
+            <>
+              <h2 className="text-xl font-bold mb-4 mt-8">
+                Historial de Pagos
+              </h2>
+              <TablePaidServices
+                paidServices={paidServices}
+                deleteService={deleteService}
+              />
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      path: "/login",
+      element: !user ? (
+        <LoginForm onLogin={handleLogin} />
+      ) : (
+        <Navigate to="/" />
+      ),
+    },
+  ]);
 
-                <button
-                  onClick={() => setTab("paid")}
-                  className={`pb-2 text-sm font-medium ${tab === "paid" ? "border-b-2 border-blue-500" : ""
-                    }`}
-                >
-                  Pagados ({paidServices.length})
-                </button>
-              </div>
-              {tab === "pending" ? (
-                <>
-                  <h2 className="text-xl font-bold mb-4 mt-8">
-                    Servicios Pendientes
-                  </h2>
-                  <ServiceCard pendingServices={pendingServices} markAsPaid={markAsPaid} deleteService={deleteService} />
-                </>
-              ) : (
-                <TablePaidServices paidServices={paidServices} deleteService={deleteService} />
-              )}
-            </section>
-          </>)
-      }
+  return (
+    <main className="max-w-3xl mx-auto">
+      <RouterProvider router={router} />
       <Toaster position="top-right" richColors />
     </main>
+  );
+}
+
+function DashboardLayout({ onLogout }) {
+  return (
+    <article className="p-4">
+      <div className="flex justify-between items-center mb-8">
+        <img src={FinLogo} alt="Logo" className="h-10" />
+        <button
+          onClick={onLogout}
+          className="bg-red-600 text-white px-4 py-2 rounded-lg"
+        >
+          Logout
+        </button>
+      </div>
+
+      <nav className="flex gap-4 mb-6 border-b">
+        <Link to="/" className="pb-2 hover:text-blue-500">
+          Pendientes
+        </Link>
+        <Link to="/pagados" className="pb-2 hover:text-blue-500">
+          Ver Pagados
+        </Link>
+      </nav>
+
+      <Outlet />
+    </article>
   );
 }
