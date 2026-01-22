@@ -61,4 +61,4 @@ Open your browser and navigate to:
 http://localhost:5173/
 ```
 
-<div align="center"> Developed with ❤️ by <a href="https://www.google.com/search?q=https://github.com/alvarezjuanign">Juan Ignacio Alvarez</a> </div>
+<div align="center"> Developed with ❤️ by <a href="https://github.com/alvarezjuanign">Juan Ignacio Alvarez</a> </div>
