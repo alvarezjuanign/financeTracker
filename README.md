@@ -1,16 +1,51 @@
-# React + Vite
+# La Arboleda landing page
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
+## Screenshots
+<img width="1853" height="999" alt="image" src="https://github.com/user-attachments/assets/af1f181a-1af9-4169-a382-36e2f64e1681" />
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features: </br>
+- View Transitions: Smooth transitions between views using View Transitions API for an enhanced UX. </br>
+- Responsive Design: Optimized for a seamless experience on mobile, tablets, and desktops. </br>
 
-## React Compiler
+<hr/>
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+## Getting Started
 
-## Expanding the ESLint configuration
+### Prerequisites
+- NodeJs
+- Pnpm
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+<hr/>
+
+## Installation
+Clone the repository and navigate to the project directory:
+```
+bash
+git clone https://github.com/alvarezjuanign/landingLaArboleda.git
+cd landingLaArboleda
+```
+
+Install the dependencies:
+```
+bash
+pnpm install
+```
+
+Run the project:
+```
+bash
+pnpm run dev
+```
+
+Open your browser and navigate to:
+```
+http://localhost:4321/
+```
+
+### 🛠️ Stack Tecnológico </br>
+
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)</br>
+![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
