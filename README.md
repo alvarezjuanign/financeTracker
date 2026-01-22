@@ -34,29 +34,25 @@
 
 ## 🛠️ Installation
 Clone the repository and navigate to the project directory:
-```
-bash
+```sh
 git clone https://github.com/alvarezjuanign/financeTracker.git
 cd financeTracker
 ```
 
 Install the dependencies:
-```
-bash
+```sh
 pnpm install
 ```
 Environment Variables
 To run this project, you will need to add the following environment variables to your `.env` file in the root directory:
 
-```
-env
+```properties
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 Run the project:
-```
-bash
+```sh
 pnpm run dev
 ```
 
